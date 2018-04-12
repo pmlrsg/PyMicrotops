@@ -5,9 +5,6 @@ from .read_from_serial import read_microtops_serial
 from matplotlib.pyplot import xlabel, ylabel, legend
 
 
-#TODO: somewhere, it would be needed to add "AOT_"
-#TODO: Make the ending variable
-
 class Microtops:
     """Loads and processes a data file from the Microtops handheld sun photometer.
     Allows easy plotting, and estimation of AOT at an arbitrary wavelength through
