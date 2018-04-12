@@ -5,6 +5,9 @@ from .read_from_serial import read_microtops_serial
 from matplotlib.pyplot import xlabel, ylabel, legend
 
 
+#TODO: somewhere, it would be needed to add "AOT_"
+#TODO: Make the ending variable
+
 class Microtops:
     """Loads and processes a data file from the Microtops handheld sun photometer.
     Allows easy plotting, and estimation of AOT at an arbitrary wavelength through
@@ -18,16 +21,20 @@ class Microtops:
     * dateutil
     """
 
-    def __init__(self, filename):
+    def __init__(self, filename, skiprows=None, header_intro="FIELDS:", ending="END."):
         """
         Create an Microtops object from a given Microtops data file
         (in CSV format, as provided by the instrument)
 
         :param filename: Filename of Microtops data to read
         :return:
+        skiprows: None, list or int -> Lines to skip, the header is automatically found from what is left
+        header_intro: str -> Some microtops have a variable info before the main columns name just before a keyword, 
+        this allows to find them automatically
+        ending: str, A string that can be found at the end of file and needs removing as well
         """
         self.filename = filename
-        self._load_file(filename)
+        self._load_file(filename, skiprows=skiprows, header_intro=header_intro, ending=ending)
 
     @classmethod
     def read_from_serial(self, port, filename, **kwargs):
@@ -40,8 +47,57 @@ class Microtops:
         read_microtops_serial(port, filename, **kwargs)
         return Microtops(filename)
 
-    def _load_file(self, filename):
-        self.data = pd.read_csv(filename)
+    def _load_file(self, filename, skiprows=None, header_intro="FIELDS:",ending="END."):
+        """
+        filename: Filename of Microtops data to read
+        skiprows: None, list or int -> Lines to skip, the header is automatically found from what is left
+        header_intro: str -> Some microtops have a variable info before the main columns name just before a keyword, 
+        this allows to find them automatically
+        ending: str, A string that can be found at the end of file and needs removing as well
+        """
+        #Will read the text to find automatically the Header and remove extra line
+        with open(filename) as f:
+            content = f.readlines()
+        #python closes it automatically
+        content = [x.strip() for x in content]
+        
+        #All lines to skip will be stored in a list called "to_skip"
+        if isinstance(skiprows,int):
+            #The user entered manually the number of lines to skip
+            to_skip = range(0,skiprows+1)
+            #The header is the next line
+        elif skiprows == None:
+            #Will look automatically for the line just before the Columns title
+            if header_intro in content:
+                skip = content.index(header_intro)
+                to_skip = range(0,skip+1)
+            else:
+                to_skip = []
+        else:
+            if not isinstance(skiprows,list):
+                print("Skiprows type not handled: {}".format(type(skiprows)))
+                raise TypeError("Skiprows type not handled: {}".format(type(skiprows)))
+        
+        #Now will look if the document has an ending that needs stripping as well
+        if content[-1] == ending:
+            end_index = int(len(content)-1)
+        else:
+            end_index = None
+
+        if end_index is not None and end_index not in to_skip:
+            to_skip.append(end_index)
+        
+        #Will make a list to remove  NaN entries as well
+        nan_lines = []
+        for i in range(0, len(content)):
+            #each line is a str
+            if "Na" in content[i]:
+                nan_lines.append(i)
+        if nan_lines != []:
+            #add that to the lines to skip
+            to_skip = to_skip+nan_lines
+
+        self.data = pd.read_csv(filename,skiprows=to_skip)
 
         def f(s):
             return parse(s['DATE'] + " " + s['TIME'])
