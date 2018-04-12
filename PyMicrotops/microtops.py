@@ -21,7 +21,7 @@ class Microtops:
     * dateutil
     """
 
-    def __init__(self, filename, skiprows=None, header_intro="FIELDS:", ending="END."):
+    def __init__(self, filename, skiprows=None, data_start="FIELDS:", ending="END."): #TODO:
         """
         Create an Microtops object from a given Microtops data file
         (in CSV format, as provided by the instrument)
@@ -34,7 +34,7 @@ class Microtops:
         ending: str, A string that can be found at the end of file and needs removing as well
         """
         self.filename = filename
-        self._load_file(filename, skiprows=skiprows, header_intro=header_intro, ending=ending)
+        self._load_file(filename, skiprows=skiprows, data_start=data_start, ending=ending)
 
     @classmethod
     def read_from_serial(self, port, filename, **kwargs):
@@ -47,7 +47,7 @@ class Microtops:
         read_microtops_serial(port, filename, **kwargs)
         return Microtops(filename)
 
-    def _load_file(self, filename, skiprows=None, header_intro="FIELDS:",ending="END."):
+    def _load_file(self, filename, skiprows=None, data_start="FIELDS:",ending="END."):
         """
         filename: Filename of Microtops data to read
         skiprows: None, list or int -> Lines to skip, the header is automatically found from what is left
@@ -68,8 +68,8 @@ class Microtops:
             #The header is the next line
         elif skiprows == None:
             #Will look automatically for the line just before the Columns title
-            if header_intro in content:
-                skip = content.index(header_intro)
+            if data_start in content:
+                skip = content.index(data_start)
                 to_skip = range(0,skip+1)
             else:
                 to_skip = []
