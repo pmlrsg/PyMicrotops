@@ -21,7 +21,7 @@ class Microtops:
     * dateutil
     """
 
-    def __init__(self, filename, skiprows=None, data_start="FIELDS:", ending="END."): #TODO:
+    def __init__(self, filename, skiprows=None, data_start="FIELDS:", ending="END."):
         """
         Create an Microtops object from a given Microtops data file
         (in CSV format, as provided by the instrument)
